@@ -6,7 +6,7 @@ import math
 
 from serial_motor_demo_msgs.msg import MotorCommand
 from serial_motor_demo_msgs.msg import MotorVels
-from serial_motor_demo_msgs.msg import EncoderVals
+##from serial_motor_demo_msgs.msg import EncoderVals
 
 
 class MotorGui(Node):
@@ -15,18 +15,19 @@ class MotorGui(Node):
         super().__init__('motor_gui')
 
         self.publisher = self.create_publisher(MotorCommand, 'motor_command', 10)
-
+        #"""
         self.speed_sub = self.create_subscription(
             MotorVels,
             'motor_vels',
             self.motor_vel_callback,
             10)
 
-        self.encoder_sub = self.create_subscription(
+        """self.encoder_sub = self.create_subscription(
             EncoderVals,
             'encoder_vals',
             self.encoder_val_callback,
             10)
+            """
 
         self.tk = Tk()
         self.tk.title("Serial Motor GUI")
@@ -59,15 +60,22 @@ class MotorGui(Node):
 
         m1_frame = Frame(root)
         m1_frame.pack(fill=X)
-        Label(m1_frame, text="Motor 1").pack(side=LEFT)
+        Label(m1_frame, text="X").pack(side=LEFT)
         self.m1 = Scale(m1_frame, from_=-255, to=255, orient=HORIZONTAL)
         self.m1.pack(side=LEFT, fill=X, expand=True)
 
         m2_frame = Frame(root)
         m2_frame.pack(fill=X)
-        Label(m2_frame, text="Motor 2").pack(side=LEFT)
+        Label(m2_frame, text="Y").pack(side=LEFT)
         self.m2 = Scale(m2_frame, from_=-255, to=255, resolution=1, orient=HORIZONTAL)
         self.m2.pack(side=LEFT, fill=X, expand=True)
+
+        m3_frame = Frame(root)
+        m3_frame.pack(fill=X)
+        Label(m3_frame, text="Theta").pack(side=LEFT)
+        self.m3 = Scale(m3_frame, from_=-255, to=255, resolution=1, orient=HORIZONTAL)
+        self.m3.pack(side=LEFT, fill=X, expand=True)
+
 
         self.m2.config(to=10)
 
@@ -78,7 +86,7 @@ class MotorGui(Node):
         Button(motor_btns_frame, text='Stop Send', command=self.show_values, state="disabled").pack(side=LEFT)
         Button(motor_btns_frame, text='Stop Mot', command=self.stop_motors).pack(side=LEFT)
         
-
+        """
         enc_frame = Frame(root)
         enc_frame.pack(fill=X)
 
@@ -98,13 +106,13 @@ class MotorGui(Node):
         self.mot_1_spd_lbl.pack(side=LEFT)
         self.mot_2_spd_lbl = Label(enc_frame, text="XXX")
         self.mot_2_spd_lbl.pack(side=LEFT)
-
+            """
 
         self.set_mode(True)
 
 
     def show_values(self):
-        print (self.m1.get(), self.m2.get())
+        print (self.m1.get(), self.m2.get(), self.m3.get())
 
     def send_motor_once(self):
         msg = MotorCommand()
@@ -112,9 +120,12 @@ class MotorGui(Node):
         if (self.pwm_mode):
             msg.mot_1_req_rad_sec = float(self.m1.get())
             msg.mot_2_req_rad_sec = float(self.m2.get())
+            msg.mot_3_req_rad_sec = float(self.m3.get())
+
         else:
-            msg.mot_1_req_rad_sec = float(self.m1.get()*2*math.pi)
-            msg.mot_2_req_rad_sec = float(self.m2.get()*2*math.pi)
+            msg.mot_1_req_rad_sec = float(self.m1.get())
+            msg.mot_2_req_rad_sec = float(self.m2.get())
+            msg.mot_3_req_rad_sec = float(self.m3.get())
 
         self.publisher.publish(msg)
 
@@ -123,19 +134,20 @@ class MotorGui(Node):
         msg.is_pwm = self.pwm_mode
         msg.mot_1_req_rad_sec = 0.0
         msg.mot_2_req_rad_sec = 0.0
+        msg.mot_3_req_rad_sec = 0.0
         self.publisher.publish(msg)
 
     def set_mode(self, new_mode):
         self.pwm_mode = new_mode
         if (self.pwm_mode):
-            self.mode_lbl.config(text="Current Mode: PWM")
-            self.mode_btn.config(text="Switch to Feedback Mode")
+            self.mode_lbl.config(text="Current Mode: Predefined")
+            self.mode_btn.config(text="Switch to Manual Mode")
             self.slider_max_label.config(state="disabled")
             self.slider_max_val_box.config(state="disabled")
             self.max_val_update_btn.config(state="disabled")
         else:
-            self.mode_lbl.config(text="Current Mode: Feedback")
-            self.mode_btn.config(text="Switch to PWM Mode")
+            self.mode_lbl.config(text="Current Mode: Manual")
+            self.mode_btn.config(text="Switch to Predefined Mode")
             self.slider_max_label.config(state="normal")
             self.slider_max_val_box.config(state="normal")
             self.max_val_update_btn.config(state="normal")
@@ -143,15 +155,17 @@ class MotorGui(Node):
         self.update_scale_limits()
 
     def motor_vel_callback(self, motor_vels):
-        mot_1_spd_rev_sec = motor_vels.mot_1_rad_sec / (2*math.pi)
-        mot_2_spd_rev_sec = motor_vels.mot_2_rad_sec / (2*math.pi)
+        mot_1_spd_rev_sec = motor_vels.mot_1_rad_sec
+        mot_2_spd_rev_sec = motor_vels.mot_2_rad_sec
+        mot_3_spd_rev_sec = motor_vels.mot_3_rad_sec
         self.mot_1_spd_lbl.config(text=f"{mot_1_spd_rev_sec:.2f}")
         self.mot_2_spd_lbl.config(text=f"{mot_2_spd_rev_sec:.2f}")
+        self.mot_3_spd_lbl.config(text=f"{mot_3_spd_rev_sec:.2f}")
 
-    def encoder_val_callback(self, encoder_vals):
+    """def encoder_val_callback(self, encoder_vals):
         self.mot_1_enc_lbl.config(text=f"{encoder_vals.mot_1_enc_val}")
         self.mot_2_enc_lbl.config(text=f"{encoder_vals.mot_2_enc_val}")
-
+        """
 
 
     def switch_mode(self):
@@ -159,12 +173,14 @@ class MotorGui(Node):
 
     def update_scale_limits(self):
         if (self.pwm_mode):
-            self.m1.config(from_=-255, to=255, resolution=1)
-            self.m2.config(from_=-255, to=255, resolution=1)
+            self.m1.config(from_=-255, to=255, resolution=0.1)
+            self.m2.config(from_=-255, to=255, resolution=0.1)
+            self.m3.config(from_=-255, to=255, resolution=0.1)
         else:
             lim = float(self.slider_max_val_box.get())
-            self.m1.config(from_=-lim, to=lim, resolution=0.1)
-            self.m2.config(from_=-lim, to=lim, resolution=0.1)
+            self.m1.config(from_=-lim, to=lim, resolution=0.01)
+            self.m2.config(from_=-lim, to=lim, resolution=0.01)
+            self.m3.config(from_=-lim, to=lim, resolution=0.01)
 
 
 
