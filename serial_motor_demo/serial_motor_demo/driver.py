@@ -86,7 +86,7 @@ class MotorDriver(Node):
     # Raw serial commands
     
     def send_pwm_motor_command(self, mot_1_pwm, mot_2_pwm, mot_3_pwm):
-        self.send_command(f"{int(mot_1_pwm)} {int(mot_2_pwm)} {int(mot_3_pwm)}")
+        self.send_command(f"{float(mot_1_pwm)} {float(mot_2_pwm)} {float(mot_3_pwm)}")
     """
 
     def send_feedback_motor_command(self, mot_1_ct_per_loop, mot_2_ct_per_loop):
